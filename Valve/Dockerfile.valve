@@ -3,7 +3,3 @@ FROM golang:1.18
 WORKDIR /app/Valve
 
 COPY Valve.go .
-
-RUN go build -o valve
-
-CMD ["./valve"]

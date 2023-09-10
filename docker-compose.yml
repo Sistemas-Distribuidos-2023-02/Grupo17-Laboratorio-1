@@ -2,36 +2,45 @@ version: '3'
 services:
   valve:
     build:
-      context: ./ 
+      context: ./Valve 
       dockerfile: Dockerfile.valve
     volumes:
       - ./Valve:/app/Valve
   
   regionales1:
     build:
-      context: ./ 
+      context: ./Regionales 
       dockerfile: Dockerfile.regionales
     volumes:
       - ./Regionales:/app/Regionales
   
   regionales2:
     build:
-      context: ./ 
+      context: ./Regionales 
       dockerfile: Dockerfile.regionales
     volumes:
       - ./Regionales:/app/Regionales
   
   regionales3:
     build:
-      context: ./ 
+      context: ./Regionales 
       dockerfile: Dockerfile.regionales
     volumes:
       - ./Regionales:/app/Regionales
   
   regionales4:
     build:
-      context: ./ 
+      context: ./Regionales 
       dockerfile: Dockerfile.regionales
     volumes:
       - ./Regionales:/app/Regionales
   
+  rabbitmq:
+    build:
+      context: ./RabbitMQ
+      dockerfile: Dockerfile.rabbitmq
+    ports:
+      - "5672:5672"
+    #environment:
+    #  RABBITMQ_DEFAULT_USER: usuario
+    #  RABBITMQ_DEFAULT_PASS: contraseña
