@@ -13,6 +13,7 @@ import (
 	"net"
 	"sync"
 	pb "Valve/proto"
+    amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type server struct {
@@ -42,7 +43,11 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
         }
     }
 
-    // Goroutine para enviar mensajes al cliente periódicamente
+    // Enviar la cantidad de llaves al cliente una vez al inicio de la conexión
+    sendToClient()
+
+    // Goroutine para enviar mensajes al cliente periódicamente (opcional)
+    // Puedes comentar o eliminar esta sección si no deseas enviar actualizaciones periódicas
     wg.Add(1)
     go func() {
         defer wg.Done()
@@ -66,7 +71,6 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
         }
 
         log.Printf("Mensaje recibido del cliente: %s", req.Message)
-
     }
 
     wg.Wait()
@@ -74,10 +78,52 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
 }
 
 
+func Datos_Cola_Rabbit(llaves int){
+        // Establece una conexión con RabbitMQ
+        conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+        if err != nil {
+            log.Fatalf("Error al conectar a RabbitMQ: %v", err)
+        }
+        defer conn.Close()
+    
+        // Crea un canal de comunicación
+        ch, err := conn.Channel()
+        if err != nil {
+            log.Fatalf("Error al abrir un canal: %v", err)
+        }
+        defer ch.Close()
+    
+        // Nombre de la cola a la que deseas suscribirte
+        queueName := "solicitudes_regionales"
+    
+
+        // Inicia la suscripción a la cola
+        msgs, err := ch.Consume(
+            queueName, // Nombre de la cola
+            "",        // Etiqueta del consumidor (en blanco para una etiqueta generada)
+            true,      // Auto-acknowledgment
+            false,     // Exclusividad
+            false,     // No local
+            false,     // No espera confirmaciones
+            nil,       // Argumentos adicionales
+        )
+        if err != nil {
+            log.Fatalf("Error al registrar el consumidor de la cola: %v", err)
+        }
+    
+        // Procesa los mensajes recibidos desde la cola
+        for msg := range msgs {
+            mensaje := string(msg.Body)
+            log.Printf("Mensaje recibido de la cola: %s", mensaje)
+            mensaje = strings.Split(mensaje, " - ")[0]
+
+        }
+}
+
 // Se supone que esta es la central Valve.
 func main() {
 	archivo, _ := os.Open("parametro_de_inicio.txt")
-	defer archivo.Close()
+	
 	
 	buffer := make([]byte, 1024) 
     n, _ := archivo.Read(buffer)
@@ -85,7 +131,7 @@ func main() {
 
     contenido = []byte(contenido)
     rangoStr := string(contenido)
-
+    archivo.Close()
     rango := strings.Split(rangoStr, "-")
 
     min := rango[0]
@@ -95,8 +141,18 @@ func main() {
 	llaves = generarLlaves(min,max)
 
 	//Print si tiene que ir.
-	fmt.Println("Se generaron ",llaves," llaves a las",time.Now().Format("15:04:05 del 2006-01-02"))
+	fmt.Println("Se generaron ",llaves," llaves a las",time.Now().Format("15:04:05"))
 
+    archivo, err := os.Create("Registros.txt")
+    if err != nil {
+        fmt.Println("Error al crear el archivo:", err)
+        return
+    }
+    defer archivo.Close()
+    archivo.WriteString(time.Now().Format("15:04") + " - " + strconv.Itoa(llaves) + "\n")
+
+
+    go Datos_Cola_Rabbit(llaves)
 
 	//Coneccion con el servidor.
 	listener, err := net.Listen("tcp", ":50051")
@@ -106,9 +162,14 @@ func main() {
 	serv := grpc.NewServer()
 
 	pb.RegisterValveServer(serv, &server{})
+    
+    
 	log.Printf("server listening at %v", listener.Addr())
 	if err := serv.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-	
+    fmt.Println("Estmoas aqui")
+    
+
+
 }

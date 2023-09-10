@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"os"
 	"fmt"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func usuariosInteresados(parametro string )int {
@@ -23,17 +24,51 @@ func usuariosInteresados(parametro string )int {
 
 }
 
+func Cola_Rabbit(interesados int){
+	    // Establece una conexión con RabbitMQ
+		conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+		if err != nil {
+			log.Fatalf("Error al conectar a RabbitMQ: %v", err)
+		}
+		defer conn.Close()
+	
+		// Crea un canal de comunicación
+		ch, err := conn.Channel()
+		if err != nil {
+			log.Fatalf("Error al abrir un canal: %v", err)
+		}
+		defer ch.Close()
+	
+		// Declara la cola a la que quieres enviar el mensaje
+		queueName := "solicitudes_regionales"
+	
+		// Publica un mensaje en la cola
+		mensaje := strconv.Itoa(interesados) + " - America"
+		err = ch.Publish(
+			"",         // Intercambio (en blanco para la cola predeterminada)
+			queueName,  // Nombre de la cola
+			false,      // Mandatorio
+			false,      // Inmediato
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        []byte(mensaje),
+			})
+		if err != nil {
+			log.Fatalf("Error al publicar mensaje en la cola: %v", err)
+		}
+}
+
 
 func main() {
-	archivo, _ := os.Open("parametro_de_inicio.txt")
-	defer archivo.Close()
-	buffer := make([]byte, 1024) 
+    archivo, _ := os.Open("parametro_de_inicio.txt")
+    defer archivo.Close()
+    buffer := make([]byte, 1024)
     n, _ := archivo.Read(buffer)
     contenido := buffer[:n]
     contenido = []byte(contenido)
     numero := string(contenido)
-	interesados := usuariosInteresados(numero)
-	fmt.Println(interesados)
+    interesados := usuariosInteresados(numero)
+    fmt.Println(interesados)
     conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
     if err != nil {
         log.Fatalf("No se pudo conectar al servidor: %v", err)
@@ -46,16 +81,15 @@ func main() {
         log.Fatalf("Error al abrir el flujo bidireccional: %v", err)
     }
 
-	// Goroutine para recibir mensajes del servidor
-	go func() {
-		for {
-			respuesta, err := stream.Recv()
-			if err != nil {
-				log.Fatalf("Error al recibir mensaje del servidor: %v", err)
-				break
-			}
-			log.Printf("Respuesta del servidor: %d", respuesta.Reply)
-		}
-	}()
-	select {}
+    // Recibir un único mensaje del servidor al inicio de la conexión
+    respuesta, err := stream.Recv()
+    if err != nil {
+        log.Fatalf("Error al recibir mensaje del servidor: %v", err)
+    }
+    log.Printf("Respuesta del servidor: %d", respuesta.Reply)
+
+
+
+	Cola_Rabbit(interesados)
+    select {}
 }
