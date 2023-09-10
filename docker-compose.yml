@@ -1,0 +1,37 @@
+version: '3'
+services:
+  valve:
+    build:
+      context: ./ 
+      dockerfile: Dockerfile.valve
+    volumes:
+      - ./Valve:/app/Valve
+  
+  regionales1:
+    build:
+      context: ./ 
+      dockerfile: Dockerfile.regionales
+    volumes:
+      - ./Regionales:/app/Regionales
+  
+  regionales2:
+    build:
+      context: ./ 
+      dockerfile: Dockerfile.regionales
+    volumes:
+      - ./Regionales:/app/Regionales
+  
+  regionales3:
+    build:
+      context: ./ 
+      dockerfile: Dockerfile.regionales
+    volumes:
+      - ./Regionales:/app/Regionales
+  
+  regionales4:
+    build:
+      context: ./ 
+      dockerfile: Dockerfile.regionales
+    volumes:
+      - ./Regionales:/app/Regionales
+  

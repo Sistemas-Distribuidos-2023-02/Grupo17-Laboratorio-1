@@ -1,0 +1,4 @@
+FROM rabbitmq:latest
+
+# Agregamos configuraciones personalizadas si es necesario
+COPY rabbitmq.config /etc/rabbitmq/

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package proto;
+
+
+service Valve {
+    rpc NotifyBidirectional(stream Request) returns (stream Response);
+  }
+
+message Request {
+    int64 message = 1;
+}
+
+message Response {
+    int64 reply = 1;
+}
