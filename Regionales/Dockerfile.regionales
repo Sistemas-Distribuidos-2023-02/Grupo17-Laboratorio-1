@@ -1,6 +1,15 @@
+# Use the official Golang image as the base image
 FROM golang:1.18
 
+# Set the working directory to the root of your application
 WORKDIR /app/Regionales
+
+# Copy your Go source code and necessary files
+COPY Regionales.go ./
+COPY parametro_de_inicio.txt ./
+COPY go.mod ./
+COPY go.sum ./
+COPY ../proto /app/Valve/proto
 
 ARG valve_server=localhost
 ARG rmq_server=localhost
@@ -9,5 +18,13 @@ ARG region_name=America
 ENV valve_server=$valve_server
 ENV region_name=$region_name
 ENV rmq_server=$rmq_server
+EXPOSE 50051
+EXPOSE 5672
+# Download Go module dependencies
+RUN go mod download
+    
+CMD go run Regionales.go
 
-COPY Regionales.go .
+
+# Command to run your application when a container is started
+

@@ -78,8 +78,10 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
 }
 
 
+
 func Datos_Cola_Rabbit(llaves int, archivo *os.File){
         // Establece una conexión con RabbitMQ
+        fmt.Println(os.Getenv("rmq_server") + ":5672/")
         conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":5672/")
         if err != nil {
             log.Fatalf("Error al conectar a RabbitMQ: %v", err)
@@ -132,7 +134,9 @@ func Datos_Cola_Rabbit(llaves int, archivo *os.File){
                 archivo.WriteString(linea)
                 fmt.Println("Quedan",llaves,"llaves a las",time.Now().Format("15:04:05"))
             }
-            
+            serv := grpc.NewServer()
+            pb.RegisterValveServer(serv, &server{})
+ 
 }}
 
 // Se supone que esta es la central Valve.
@@ -148,10 +152,19 @@ func main() {
     rangoStr := string(contenido)
     archivo.Close()
     rango := strings.Split(rangoStr, "-")
+    
+    min := strings.TrimSpace(rango[0])
+    max_it := strings.Split(rango[1], "\n")
+    max := max_it[0]
+    iteraciones := max_it[1]
 
-    min := rango[0]
-    max := rango[1]
-	//Este print no se si tiene que ir.
+    max = strings.TrimSpace(max)
+    fmt.Println("min:", min)
+    fmt.Println("max:", max)
+    fmt.Println("iteraciones:", iteraciones)
+    
+
+
     fmt.Println("Se generaran llaves al azar pertenecientes al siguente rango: [",min,",",max,"]")
 	llaves = generarLlaves(min,max)
 
@@ -183,8 +196,7 @@ func main() {
 	if err := serv.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-    fmt.Println("Estmoas aqui")
-    
+
 
 
 }

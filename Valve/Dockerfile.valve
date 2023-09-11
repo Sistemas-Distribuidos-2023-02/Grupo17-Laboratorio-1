@@ -1,13 +1,25 @@
+# Use the official Golang image as the base image
 FROM golang:1.18
 
+# Set the working directory to the root of your application
 WORKDIR /app/Valve
 
-ARG rmq_server=localhost
-
-ENV rmq_server=$rmq_server
-
+# Copy your Go source code and necessary files
 COPY Valve.go ./
 COPY parametro_de_inicio.txt ./
-COPY ../go.mod ../go.sum ./
+COPY go.mod ./
+COPY go.sum ./
+COPY ../proto /app/Valve/proto
+
+ARG rmq_server=localhost
+ENV rmq_server=$rmq_server
+EXPOSE 50051
+EXPOSE 5672
+# Download Go module dependencies
 RUN go mod download
-RUN go run Valve.go
+    
+CMD go run Valve.go
+
+
+# Command to run your application when a container is started
+

@@ -8,7 +8,7 @@ services:
         rmq_server: localhost
     volumes:
       - ./Valve:/app/Valve
-  
+    network_mode: "host"
   regionales1:
     build:
       context: ./Regionales 
@@ -19,6 +19,7 @@ services:
         region_name: America
     volumes:
       - ./Regionales:/app/Regionales
+    network_mode: "host"
   
   regionales2:
     build:
@@ -30,6 +31,7 @@ services:
         region_name: Europa
     volumes:
       - ./Regionales:/app/Regionales
+    network_mode: "host"
       
   regionales3:
     build:
@@ -41,6 +43,7 @@ services:
         region_name: Asia
     volumes:
       - ./Regionales:/app/Regionales
+    network_mode: "host"
   
   regionales4:
     build:
@@ -52,6 +55,7 @@ services:
         region_name: Oceania
     volumes:
       - ./Regionales:/app/Regionales
+    network_mode: "host"
   
   rabbitmq:
     build:

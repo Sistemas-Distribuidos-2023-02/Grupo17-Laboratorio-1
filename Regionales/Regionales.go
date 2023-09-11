@@ -13,6 +13,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+
+
 func usuariosInteresados(parametro string )int {
 	rand.Seed(time.Now().UnixNano())
 	param, _ := strconv.Atoi(parametro)
@@ -45,7 +47,8 @@ func Cola_Rabbit(interesados int){
 		queueName := "solicitudes_regionales"
 	
 		// Publica un mensaje en la cola
-		mensaje := strconv.Itoa(interesados) + " - " + os.Getenv("region_name")
+		//mensaje := strconv.Itoa(interesados) + " - " + os.Getenv("region_name")
+		mensaje := strconv.Itoa(interesados) + " - " + "America"
 		err = ch.Publish(
 			"",         // Intercambio (en blanco para la cola predeterminada)
 			queueName,  // Nombre de la cola
