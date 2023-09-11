@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"os"
 	"fmt"
+	"time"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func usuariosInteresados(parametro string )int {
+	rand.Seed(time.Now().UnixNano())
 	param, _ := strconv.Atoi(parametro)
 	interesados := float64(param) / 2 
 	interesados_min := interesados - interesados*0.2

@@ -78,7 +78,7 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
 }
 
 
-func Datos_Cola_Rabbit(llaves int){
+func Datos_Cola_Rabbit(llaves int, archivo *os.File){
         // Establece una conexión con RabbitMQ
         conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
         if err != nil {
@@ -110,15 +110,30 @@ func Datos_Cola_Rabbit(llaves int){
         if err != nil {
             log.Fatalf("Error al registrar el consumidor de la cola: %v", err)
         }
-    
+        
         // Procesa los mensajes recibidos desde la cola
         for msg := range msgs {
             mensaje := string(msg.Body)
             log.Printf("Mensaje recibido de la cola: %s", mensaje)
-            mensaje = strings.Split(mensaje, " - ")[0]
-
-        }
-}
+            value_mensaje := strings.Split(mensaje, " - ")
+            mensaje_numero,_ := strconv.Atoi(value_mensaje[0])
+            if llaves - mensaje_numero < 0{
+                llaves_solicitadas := mensaje_numero
+                mensaje_numero = mensaje_numero - llaves
+                usuarios_registrados := llaves
+                llaves = 0
+                fmt.Println("No quedan llaves a las",time.Now().Format("15:04:05"))
+                fmt.Println("Quedaron",mensaje_numero,"personas sin llaves en ", value_mensaje[1])
+                linea := "  "+value_mensaje[1] + "-" + strconv.Itoa(llaves_solicitadas) + "-" + strconv.Itoa(usuarios_registrados) + "-"+ strconv.Itoa(mensaje_numero) + "\n"
+                archivo.WriteString(linea)
+            }else{
+                llaves = llaves - mensaje_numero
+                linea := "  "+value_mensaje[1] + "-" + strconv.Itoa(mensaje_numero) + "-" + strconv.Itoa(mensaje_numero) + "- 0\n"
+                archivo.WriteString(linea)
+                fmt.Println("Quedan",llaves,"llaves a las",time.Now().Format("15:04:05"))
+            }
+            
+}}
 
 // Se supone que esta es la central Valve.
 func main() {
@@ -152,7 +167,7 @@ func main() {
     archivo.WriteString(time.Now().Format("15:04") + " - " + strconv.Itoa(llaves) + "\n")
 
 
-    go Datos_Cola_Rabbit(llaves)
+    go Datos_Cola_Rabbit(llaves , archivo)
 
 	//Coneccion con el servidor.
 	listener, err := net.Listen("tcp", ":50051")
