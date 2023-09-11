@@ -28,7 +28,7 @@ func usuariosInteresados(parametro string )int {
 
 func Cola_Rabbit(interesados int){
 	    // Establece una conexión con RabbitMQ
-		conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+		conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":5672/")
 		if err != nil {
 			log.Fatalf("Error al conectar a RabbitMQ: %v", err)
 		}
@@ -45,7 +45,7 @@ func Cola_Rabbit(interesados int){
 		queueName := "solicitudes_regionales"
 	
 		// Publica un mensaje en la cola
-		mensaje := strconv.Itoa(interesados) + " - America"
+		mensaje := strconv.Itoa(interesados) + " - " + os.Getenv("region_name")
 		err = ch.Publish(
 			"",         // Intercambio (en blanco para la cola predeterminada)
 			queueName,  // Nombre de la cola
@@ -71,7 +71,7 @@ func main() {
     numero := string(contenido)
     interesados := usuariosInteresados(numero)
     fmt.Println(interesados)
-    conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+    conn, err := grpc.Dial(os.Getenv("valve_server") + ":50051", grpc.WithInsecure())
     if err != nil {
         log.Fatalf("No se pudo conectar al servidor: %v", err)
     }

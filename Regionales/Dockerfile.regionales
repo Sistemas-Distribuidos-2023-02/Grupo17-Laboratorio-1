@@ -2,4 +2,11 @@ FROM golang:1.18
 
 WORKDIR /app/Regionales
 
+ARG valve_server=localhost
+ARG rmq_server=localhost
+ARG region_name=America
+
+ENV valve_server=$valve_server
+ENV region_name=$region_name
+
 COPY Regionales.go .
