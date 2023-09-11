@@ -6,4 +6,8 @@ ARG rmq_server=localhost
 
 ENV rmq_server=$rmq_server
 
-COPY Valve.go .
+COPY Valve.go ./
+COPY parametro_de_inicio.txt ./
+COPY ../go.mod ../go.sum ./
+RUN go mod download
+RUN go run Valve.go
