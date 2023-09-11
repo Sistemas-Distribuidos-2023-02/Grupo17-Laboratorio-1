@@ -2,4 +2,8 @@ FROM golang:1.18
 
 WORKDIR /app/Valve
 
+ARG rmq_server=localhost
+
+ENV rmq_server=$rmq_server
+
 COPY Valve.go .

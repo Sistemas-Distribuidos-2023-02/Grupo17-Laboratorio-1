@@ -8,5 +8,6 @@ ARG region_name=America
 
 ENV valve_server=$valve_server
 ENV region_name=$region_name
+ENV rmq_server=$rmq_server
 
 COPY Regionales.go .

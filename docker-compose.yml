@@ -4,6 +4,8 @@ services:
     build:
       context: ./Valve 
       dockerfile: Dockerfile.valve
+      args:
+        rmq_server: localhost
     volumes:
       - ./Valve:/app/Valve
   
@@ -11,6 +13,10 @@ services:
     build:
       context: ./Regionales 
       dockerfile: Dockerfile.regionales
+      args:
+        valve_server: localhost
+        rmq_server: localhost
+        region_name: America
     volumes:
       - ./Regionales:/app/Regionales
   
@@ -18,13 +24,21 @@ services:
     build:
       context: ./Regionales 
       dockerfile: Dockerfile.regionales
+      args:
+        valve_server: localhost
+        rmq_server: localhost
+        region_name: Europa
     volumes:
       - ./Regionales:/app/Regionales
-  
+      
   regionales3:
     build:
       context: ./Regionales 
       dockerfile: Dockerfile.regionales
+      args:
+        valve_server: localhost
+        rmq_server: localhost
+        region_name: Asia
     volumes:
       - ./Regionales:/app/Regionales
   
@@ -32,6 +46,10 @@ services:
     build:
       context: ./Regionales 
       dockerfile: Dockerfile.regionales
+      args:
+        valve_server: localhost
+        rmq_server: localhost
+        region_name: Oceania
     volumes:
       - ./Regionales:/app/Regionales
   
