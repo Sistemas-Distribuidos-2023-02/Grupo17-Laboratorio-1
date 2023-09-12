@@ -44,11 +44,14 @@ func generarLlaves(min, max string) int {
 }
 
 func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) error {
-    var wg sync.WaitGroup
     updateCh := make(chan int)
     var mu sync.Mutex
     for {
         mu.Lock()
+        if iteraciones == 0{
+            fmt.Println("Se termino el programa a las",time.Now().Format("15:04:05"))
+            break
+        }
         servers = servers + 1
         sendToClient := func(valor int) {
             response := &pb.Response{Reply: int64(valor)}
@@ -61,15 +64,9 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
         sendToClient(llaves)
 
         // Ejecutar Datos_Cola_Rabbit en una goroutine
-        wg.Add(1)
-        go func() {
-            defer wg.Done()
-            Datos_Cola_Rabbit(archivo, updateCh)
-        }()
+        time.Sleep(5 * time.Second)
+        llaves = Datos_Cola_Rabbit(archivo, updateCh)
 
-        time.Sleep(3 * time.Second)
-        updatedValue := <-updateCh
-        llaves = updatedValue
 
         sendToClient(mensaje_numero)
         if servers == 4{
@@ -80,14 +77,15 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
             if iteraciones == 0{
                 fmt.Println("Se termino el programa a las",time.Now().Format("15:04:05"))
                 break
-            }
-            llaves = generarLlaves(min,max)
-            archivo.WriteString(time.Now().Format("15:04") + " - " + strconv.Itoa(llaves) + "\n")
+            }else{
+                llaves = generarLlaves(min,max)
+                archivo.WriteString(time.Now().Format("15:04") + " - " + strconv.Itoa(llaves) + "\n")
             
-            fmt.Println("Se generaron ",llaves," llaves a las",time.Now().Format("15:04:05"))
-        }
+                fmt.Println("Se generaron ",llaves," llaves a las",time.Now().Format("15:04:05"))
+            }
+            }
+            
         mu.Unlock()
-        time.Sleep(3 * time.Second)
         
     }
     return nil
@@ -95,44 +93,40 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
 
 
 
-func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int){
-
+func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int) int{
+    llavesMutex.Lock()
         conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":5672/")
         if err != nil {
             log.Fatalf("Error al conectar a RabbitMQ: %v", err)
         }
         defer conn.Close()
-    
+
         // Crea un canal de comunicación
         ch, err := conn.Channel()
         if err != nil {
             log.Fatalf("Error al abrir un canal: %v", err)
         }
         defer ch.Close()
-    
-        // Nombre de la cola a la que deseas suscribirte
-        queueName := "solicitudes_regionales"
-    
 
-        // Inicia la suscripción a la cola
-        msgs, err := ch.Consume(
-            queueName, // Nombre de la cola
-            "",        // Etiqueta del consumidor (en blanco para una etiqueta generada)
-            true,      // Auto-acknowledgment
-            false,     // Exclusividad
-            false,     // No local
-            false,     // No espera confirmaciones
-            nil,       // Argumentos adicionales
-        )
+        // Nombre de la cola de la que deseas retirar un mensaje
+        queueName := "solicitudes_regionales"
+
+        // Retira un mensaje de la cola
+        msg, _, err := ch.Get(queueName, false)
         if err != nil {
-            log.Fatalf("Error al registrar el consumidor de la cola: %v", err)
+            log.Fatalf("Error al retirar mensaje de la cola: %v", err)
         }
-        
-        // Procesa los mensajes recibidos desde la cola
-        for msg := range msgs {
-            llavesMutex.Lock()
-            mensaje := string(msg.Body)
-            log.Printf("Mensaje recibido de la cola: %s", mensaje)
+
+        // Procesa el mensaje (tu lógica de procesamiento de mensajes aquí)
+        mensaje := string(msg.Body)
+        log.Printf("Mensaje retirado de la cola: %s", mensaje)
+
+        // Confirma manualmente el mensaje una vez procesado
+        if err := msg.Ack(false); err != nil {
+            log.Printf("Error al confirmar el mensaje: %v", err)
+        }   
+
+            
             value_mensaje := strings.Split(mensaje, " - ")
             mensaje_numero,_ = strconv.Atoi(value_mensaje[0])
             if llaves - mensaje_numero < 0{
@@ -151,11 +145,10 @@ func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int){
                 archivo.WriteString(linea)
                 fmt.Println("Quedan",llaves,"llaves a las",time.Now().Format("15:04:05"))
             }
-            updateCh <- llaves
             llavesMutex.Unlock()
+            return llaves
             
-            
-}}
+}
 
 
 
