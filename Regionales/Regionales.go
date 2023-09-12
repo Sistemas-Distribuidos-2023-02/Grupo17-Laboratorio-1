@@ -47,8 +47,8 @@ func Cola_Rabbit(interesados int){
 		queueName := "solicitudes_regionales"
 	
 		// Publica un mensaje en la cola
-		//mensaje := strconv.Itoa(interesados) + " - " + os.Getenv("region_name")
-		mensaje := strconv.Itoa(interesados) + " - " + "America"
+		mensaje := strconv.Itoa(interesados) + " - " + os.Getenv("region_name")
+		//mensaje := strconv.Itoa(interesados) + " - " + "America"
 		err = ch.Publish(
 			"",         // Intercambio (en blanco para la cola predeterminada)
 			queueName,  // Nombre de la cola
@@ -62,6 +62,8 @@ func Cola_Rabbit(interesados int){
 			log.Fatalf("Error al publicar mensaje en la cola: %v", err)
 		}
 }
+
+
 
 
 func main() {
@@ -87,14 +89,26 @@ func main() {
     }
 
     // Recibir un único mensaje del servidor al inicio de la conexión
-    respuesta, err := stream.Recv()
-    if err != nil {
-        log.Fatalf("Error al recibir mensaje del servidor: %v", err)
-    }
-    log.Printf("Respuesta del servidor: %d", respuesta.Reply)
+	for {
+		respuesta, err := stream.Recv()
+		if err != nil {
+			log.Fatalf("Error al recibir mensaje del servidor: %v", err)
+		}
+		log.Printf("Respuesta del servidor: %d", respuesta.Reply)
 
 
 
-	Cola_Rabbit(interesados)
+		Cola_Rabbit(interesados)
+
+		respuesta2, err := stream.Recv()
+		if err != nil {
+			log.Fatalf("Error al recibir mensaje del servidor: %v", err)
+		}
+		log.Printf("Respuesta del servidor: %d", respuesta2.Reply)
+		interesados = int(respuesta2.Reply)
+		fmt.Println("Se quedaron sin llaves: ", interesados)
+		time.Sleep(3 * time.Second)
+
+	}
     select {}
 }

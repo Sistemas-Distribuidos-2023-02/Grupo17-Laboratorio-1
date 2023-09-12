@@ -20,7 +20,15 @@ type server struct {
 	pb.UnimplementedValveServer
 }
 
+
+var llavesMutex sync.Mutex
 var llaves int
+var archivo *os.File
+var iteraciones int
+var min string
+var max string
+var mensaje_numero int
+var servers int 
 
 //generarLlaves genera llaves al azar.
 func generarLlaves(min, max string) int {
@@ -28,60 +36,67 @@ func generarLlaves(min, max string) int {
 	minInt, _ := strconv.Atoi(min)
 	maxInt, _ := strconv.Atoi(max)
 	rango := maxInt - minInt
+    llavesMutex.Lock()
 	llaves = rand.Intn(rango) + minInt
+    llavesMutex.Unlock()
 	return llaves
+    
 }
 
 func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) error {
     var wg sync.WaitGroup
-
-    // Función para enviar mensajes al cliente
-    sendToClient := func() {
-        response := &pb.Response{Reply: int64(llaves)}
-        if err := stream.Send(response); err != nil {
-            log.Printf("Error al enviar respuesta al cliente: %v", err)
-        }
-    }
-
-    // Enviar la cantidad de llaves al cliente una vez al inicio de la conexión
-    sendToClient()
-
-    // Goroutine para enviar mensajes al cliente periódicamente (opcional)
-    // Puedes comentar o eliminar esta sección si no deseas enviar actualizaciones periódicas
-    wg.Add(1)
-    go func() {
-        defer wg.Done()
-        ticker := time.NewTicker(5 * time.Second)
-        defer ticker.Stop()
-
-        for {
-            select {
-            case <-ticker.C:
-                sendToClient()
-            case <-stream.Context().Done():
-                return
+    updateCh := make(chan int)
+    var mu sync.Mutex
+    for {
+        mu.Lock()
+        servers = servers + 1
+        sendToClient := func(valor int) {
+            response := &pb.Response{Reply: int64(valor)}
+            if err := stream.Send(response); err != nil {
+                log.Printf("Error al enviar respuesta al cliente: %v", err)
             }
         }
-    }()
 
-    for {
-        req, err := stream.Recv()
-        if err != nil {
-            break
+        // Enviar la cantidad de llaves al cliente una vez al inicio de la conexión
+        sendToClient(llaves)
+
+        // Ejecutar Datos_Cola_Rabbit en una goroutine
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            Datos_Cola_Rabbit(archivo, updateCh)
+        }()
+
+        time.Sleep(3 * time.Second)
+        updatedValue := <-updateCh
+        llaves = updatedValue
+
+        sendToClient(mensaje_numero)
+        if servers == 4{
+            servers = 0
+            iteraciones = iteraciones - 1
+
+            
+            if iteraciones == 0{
+                fmt.Println("Se termino el programa a las",time.Now().Format("15:04:05"))
+                break
+            }
+            llaves = generarLlaves(min,max)
+            archivo.WriteString(time.Now().Format("15:04") + " - " + strconv.Itoa(llaves) + "\n")
+            
+            fmt.Println("Se generaron ",llaves," llaves a las",time.Now().Format("15:04:05"))
         }
-
-        log.Printf("Mensaje recibido del cliente: %s", req.Message)
+        mu.Unlock()
+        time.Sleep(3 * time.Second)
+        
     }
-
-    wg.Wait()
     return nil
 }
 
 
 
-func Datos_Cola_Rabbit(llaves int, archivo *os.File){
-        // Establece una conexión con RabbitMQ
-        fmt.Println(os.Getenv("rmq_server") + ":5672/")
+func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int){
+
         conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":5672/")
         if err != nil {
             log.Fatalf("Error al conectar a RabbitMQ: %v", err)
@@ -115,10 +130,11 @@ func Datos_Cola_Rabbit(llaves int, archivo *os.File){
         
         // Procesa los mensajes recibidos desde la cola
         for msg := range msgs {
+            llavesMutex.Lock()
             mensaje := string(msg.Body)
             log.Printf("Mensaje recibido de la cola: %s", mensaje)
             value_mensaje := strings.Split(mensaje, " - ")
-            mensaje_numero,_ := strconv.Atoi(value_mensaje[0])
+            mensaje_numero,_ = strconv.Atoi(value_mensaje[0])
             if llaves - mensaje_numero < 0{
                 llaves_solicitadas := mensaje_numero
                 mensaje_numero = mensaje_numero - llaves
@@ -131,32 +147,37 @@ func Datos_Cola_Rabbit(llaves int, archivo *os.File){
             }else{
                 llaves = llaves - mensaje_numero
                 linea := "  "+value_mensaje[1] + "-" + strconv.Itoa(mensaje_numero) + "-" + strconv.Itoa(mensaje_numero) + "- 0\n"
+                mensaje_numero = 0
                 archivo.WriteString(linea)
                 fmt.Println("Quedan",llaves,"llaves a las",time.Now().Format("15:04:05"))
             }
-            serv := grpc.NewServer()
-            pb.RegisterValveServer(serv, &server{})
- 
+            updateCh <- llaves
+            llavesMutex.Unlock()
+            
+            
 }}
+
+
 
 // Se supone que esta es la central Valve.
 func main() {
-	archivo, _ := os.Open("parametro_de_inicio.txt")
+    servers = 0
+	archivo1, _ := os.Open("parametro_de_inicio.txt")
 	
 	
 	buffer := make([]byte, 1024) 
-    n, _ := archivo.Read(buffer)
+    n, _ := archivo1.Read(buffer)
     contenido := buffer[:n]
 
     contenido = []byte(contenido)
     rangoStr := string(contenido)
-    archivo.Close()
+    archivo1.Close()
     rango := strings.Split(rangoStr, "-")
     
-    min := strings.TrimSpace(rango[0])
+    min = strings.TrimSpace(rango[0])
     max_it := strings.Split(rango[1], "\n")
-    max := max_it[0]
-    iteraciones := max_it[1]
+    max = max_it[0]
+    iteraciones,_ = strconv.Atoi(max_it[1])
 
     max = strings.TrimSpace(max)
     fmt.Println("min:", min)
@@ -171,16 +192,11 @@ func main() {
 	//Print si tiene que ir.
 	fmt.Println("Se generaron ",llaves," llaves a las",time.Now().Format("15:04:05"))
 
-    archivo, err := os.Create("Registros.txt")
-    if err != nil {
-        fmt.Println("Error al crear el archivo:", err)
-        return
-    }
+    archivo, _ = os.Create("Registros.txt")
+
     defer archivo.Close()
     archivo.WriteString(time.Now().Format("15:04") + " - " + strconv.Itoa(llaves) + "\n")
 
-
-    go Datos_Cola_Rabbit(llaves , archivo)
 
 	//Coneccion con el servidor.
 	listener, err := net.Listen("tcp", ":50051")
