@@ -1,1 +1,9 @@
-FROM rabbitmq:latest
+FROM rabbitmq:3-management
+
+COPY rabbitmq.conf /etc/rabbitmq/
+
+ENV RABBITMQ_DEFAULT_USER=root
+ENV RABBITMQ_DEFAULT_PASS=1234
+
+RUN rabbitmq-plugins enable rabbitmq_management
+RUN rabbitmqctl add_queue cola1
