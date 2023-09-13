@@ -14,10 +14,15 @@ COPY ../proto /app/Valve/proto
 ARG valve_server=localhost
 ARG rmq_server=localhost
 ARG region_name=America
+ARG valve_port=50051
+ARG rmq_port=5672
 
 ENV valve_server=$valve_server
 ENV region_name=$region_name
 ENV rmq_server=$rmq_server
+ENV valve_port=$valve_port
+ENV rmq_port=$rmq_port
+
 EXPOSE 50051
 EXPOSE 5672
 # Download Go module dependencies
