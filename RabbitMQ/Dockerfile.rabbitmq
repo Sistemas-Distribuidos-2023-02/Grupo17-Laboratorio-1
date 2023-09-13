@@ -6,4 +6,5 @@ ENV RABBITMQ_DEFAULT_USER=root
 ENV RABBITMQ_DEFAULT_PASS=1234
 
 RUN rabbitmq-plugins enable rabbitmq_management
-RUN rabbitmqctl add_queue cola1
+RUN rabbitmq-plugins enable rabbitmq_shovel
+
