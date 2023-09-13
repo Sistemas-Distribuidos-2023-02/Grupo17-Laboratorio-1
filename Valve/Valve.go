@@ -93,8 +93,9 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
 
 
 func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int) int{
-    llavesMutex.Lock()
-        conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_port") + ":5672/")
+        llavesMutex.Lock()
+        conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":" + os.Getenv("rmq_port") + "/")
+
         if err != nil {
             log.Fatalf("Error al conectar a RabbitMQ: %v", err)
         }
