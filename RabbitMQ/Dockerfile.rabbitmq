@@ -1,6 +1,12 @@
 # Usa la imagen oficial de RabbitMQ desde Docker Hub
 FROM rabbitmq:3.8
-
 # Habilita el complemento de gestión de RabbitMQ
 RUN rabbitmq-plugins enable rabbitmq_management
-RUN rabbitmqctl add_queue cola1
+# Definir el nombre de la cola
+#ENV QUEUE_NAME cola1
+# Exponer el puerto de RabbitMQ (por defecto, 5672) y el puerto de la interfaz de gestión (15672)
+EXPOSE 5672 15672
+
+# Copiar el archivo de configuración personalizado y el archivo de definición de cola a la imagen
+#COPY rabbitmq.conf /etc/rabbitmq/
+#COPY rabbitmq-definitions.json /etc/rabbitmq/
