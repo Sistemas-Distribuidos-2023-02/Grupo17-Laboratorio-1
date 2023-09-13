@@ -23,4 +23,4 @@ docker exec -it rabbitmq /bin/bash
 rabbitmqadmin declare queue name=solicitudes_regionales
 ```
 ## Orden de ejecución
-Iniciar la central primero y luego posteriormente iniciar en algun orden los servidores regionales. (puede ocurrir errores si son todos al mismo tiempo).
+Iniciar la cola rabbit primero, luego la central y posteriormente iniciar en algun orden los servidores regionales. (puede ocurrir errores si son todos al mismo tiempo).
