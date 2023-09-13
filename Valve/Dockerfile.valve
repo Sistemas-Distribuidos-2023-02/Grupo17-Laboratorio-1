@@ -12,7 +12,11 @@ COPY go.sum ./
 COPY ../proto /app/Valve/proto
 
 ARG rmq_server=localhost
+ARG rmq_port=5672
+
 ENV rmq_server=$rmq_server
+ENV rmq_port=$rmq_port
+
 EXPOSE 50051
 EXPOSE 5672
 # Download Go module dependencies

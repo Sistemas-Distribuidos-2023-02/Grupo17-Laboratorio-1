@@ -29,7 +29,7 @@ func usuariosInteresados(parametro string )int {
 
 func Cola_Rabbit(interesados int){
 	    // Establece una conexión con RabbitMQ
-		conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_port") + ":5672/")
+		conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":" + os.Getenv("rmq_port") + "/")
 		if err != nil {
 			log.Fatalf("Error al conectar a RabbitMQ: %v", err)
 		}

@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile.valve
       args:
         rmq_server: localhost
+        rmq_port: 5672
     volumes:
       - ./Valve:/app/Valve
     network_mode: "host"
@@ -16,6 +17,7 @@ services:
       args:
         valve_server: localhost
         rmq_server: localhost
+        rmq_port: 5672
         region_name: America
     volumes:
       - ./Regionales:/app/Regionales
@@ -28,6 +30,7 @@ services:
       args:
         valve_server: localhost
         rmq_server: localhost
+        rmq_port: 5672
         region_name: Europa
     volumes:
       - ./Regionales:/app/Regionales
@@ -40,6 +43,7 @@ services:
       args:
         valve_server: localhost
         rmq_server: localhost
+        rmq_port: 5672
         region_name: Asia
     volumes:
       - ./Regionales:/app/Regionales
@@ -52,6 +56,7 @@ services:
       args:
         valve_server: localhost
         rmq_server: localhost
+        rmq_port: 5672
         region_name: Oceania
     volumes:
       - ./Regionales:/app/Regionales
