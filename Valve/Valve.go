@@ -48,7 +48,7 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
     var mu sync.Mutex
     for {
         mu.Lock()
-        if iteraciones == 0{
+        if x == iteraciones {
             break
         }
         servers = servers + 1
