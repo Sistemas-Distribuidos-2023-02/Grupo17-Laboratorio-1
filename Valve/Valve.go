@@ -157,7 +157,7 @@ func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int) int{
 // Se supone que esta es la central Valve.
 func main() {
     servers = 0
-    x = 1
+    x = 0
 	archivo1, _ := os.Open("parametro_de_inicio.txt")
 	
 	
