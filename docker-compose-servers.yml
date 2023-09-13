@@ -1,0 +1,73 @@
+version: '3'
+services:
+  valve:
+    build:
+      context: ./Valve 
+      dockerfile: Dockerfile.valve
+      args:
+        rmq_server: dist065.inf.santiago.usm.cl
+        rmq_port: 25671
+    volumes:
+      - ./Valve:/app/Valve
+    network_mode: "host"
+  regionales1:
+    build:
+      context: ./Regionales 
+      dockerfile: Dockerfile.regionales
+      args:
+        valve_server: dist066.inf.santiago.usm.cl
+        rmq_server: dist065.inf.santiago.usm.cl
+        rmq_port: 25671
+        region_name: America
+    volumes:
+      - ./Regionales:/app/Regionales
+    network_mode: "host"
+  
+  regionales2:
+    build:
+      context: ./Regionales 
+      dockerfile: Dockerfile.regionales
+      args:
+        valve_server: dist066.inf.santiago.usm.cl
+        rmq_server: dist065.inf.santiago.usm.cl
+        rmq_port: 25671
+        region_name: Europa
+    volumes:
+      - ./Regionales:/app/Regionales
+    network_mode: "host"
+      
+  regionales3:
+    build:
+      context: ./Regionales 
+      dockerfile: Dockerfile.regionales
+      args:
+        valve_server: dist066.inf.santiago.usm.cl
+        rmq_server: dist065.inf.santiago.usm.cl
+        rmq_port: 25671
+        region_name: Asia
+    volumes:
+      - ./Regionales:/app/Regionales
+    network_mode: "host"
+  
+  regionales4:
+    build:
+      context: ./Regionales 
+      dockerfile: Dockerfile.regionales
+      args:
+        valve_server: dist066.inf.santiago.usm.cl
+        rmq_server: dist065.inf.santiago.usm.cl
+        rmq_port: 25671
+        region_name: Oceania
+    volumes:
+      - ./Regionales:/app/Regionales
+    network_mode: "host"
+  
+  rabbitmq:
+    build:
+      context: ./RabbitMQ
+      dockerfile: Dockerfile.rabbitmq
+    ports:
+      - "5672:5672"
+    #environment:
+    #  RABBITMQ_DEFAULT_USER: usuario
+    #  RABBITMQ_DEFAULT_PASS: contraseña
