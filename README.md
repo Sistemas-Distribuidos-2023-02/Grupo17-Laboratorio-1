@@ -19,6 +19,8 @@ Ademas tienes que verificar la configuracipon en docker-compose.yml
 Para iniciar un servidor rabbit usando docker usamos.
 ```
 make docker-rabbit
+docker exec -it rabbitmq /bin/bash
+rabbitmqadmin declare queue name=solicitudes_regionales
 ```
 ## Orden de ejecución
 Iniciar la central primero y luego posteriormente iniciar en algun orden los servidores regionales. (puede ocurrir errores si son todos al mismo tiempo).
