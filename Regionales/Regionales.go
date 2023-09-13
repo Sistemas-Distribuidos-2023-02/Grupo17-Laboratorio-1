@@ -23,14 +23,13 @@ func usuariosInteresados(parametro string )int {
 	interesados_max := interesados + interesados*0.2
 	rango :=  interesados_max- interesados_min
 	interesados_reales := rand.Intn(int(rango)) + int(interesados_min)
-	fmt.Println(interesados_min, interesados_max)
 	return interesados_reales
 
 }
 
 func Cola_Rabbit(interesados int){
 	    // Establece una conexión con RabbitMQ
-		conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":5672/")
+		conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_port") + ":5672/")
 		if err != nil {
 			log.Fatalf("Error al conectar a RabbitMQ: %v", err)
 		}
@@ -75,7 +74,8 @@ func main() {
     contenido = []byte(contenido)
     numero := string(contenido)
     interesados := usuariosInteresados(numero)
-    fmt.Println(interesados)
+
+    fmt.Println("Cantidad de personas interesadas: ",interesados, "en la region: ", os.Getenv("region_name"))
     conn, err := grpc.Dial(os.Getenv("valve_server") + ":50051", grpc.WithInsecure())
     if err != nil {
         log.Fatalf("No se pudo conectar al servidor: %v", err)
@@ -105,9 +105,10 @@ func main() {
 			log.Fatalf("Error al recibir mensaje del servidor: %v", err)
 		}
 		log.Printf("Respuesta del servidor: %d", respuesta2.Reply)
+		fmt.Println("Personas que lograron inscribirse: ", interesados-int(respuesta2.Reply))
 		interesados = int(respuesta2.Reply)
 		fmt.Println("Se quedaron sin llaves: ", interesados)
-		time.Sleep( 10 * time.Second)
+
 
 	}
     select {}

@@ -29,7 +29,7 @@ var min string
 var max string
 var mensaje_numero int
 var servers int 
-
+var x int
 //generarLlaves genera llaves al azar.
 func generarLlaves(min, max string) int {
 	rand.Seed(time.Now().UnixNano())
@@ -49,7 +49,6 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
     for {
         mu.Lock()
         if iteraciones == 0{
-            fmt.Println("Se termino el programa a las",time.Now().Format("15:04:05"))
             break
         }
         servers = servers + 1
@@ -71,17 +70,17 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
         sendToClient(mensaje_numero)
         if servers == 4{
             servers = 0
-            iteraciones = iteraciones - 1
+            x = x + 1
 
             
-            if iteraciones == 0{
+            if x == iteraciones{
                 fmt.Println("Se termino el programa a las",time.Now().Format("15:04:05"))
                 break
             }else{
                 llaves = generarLlaves(min,max)
                 archivo.WriteString(time.Now().Format("15:04") + " - " + strconv.Itoa(llaves) + "\n")
-            
-                fmt.Println("Se generaron ",llaves," llaves a las",time.Now().Format("15:04:05"))
+                fmt.Println("Generación ", x,)
+                fmt.Println("Se generaron nuevas ",llaves," llaves a las",time.Now().Format("15:04:05"))
             }
             }
             
@@ -95,7 +94,7 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
 
 func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int) int{
     llavesMutex.Lock()
-        conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_server") + ":5672/")
+        conn, err := amqp.Dial("amqp://guest:guest@" + os.Getenv("rmq_port") + ":5672/")
         if err != nil {
             log.Fatalf("Error al conectar a RabbitMQ: %v", err)
         }
@@ -119,7 +118,7 @@ func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int) int{
 
         // Procesa el mensaje (tu lógica de procesamiento de mensajes aquí)
         mensaje := string(msg.Body)
-        log.Printf("Mensaje retirado de la cola: %s", mensaje)
+        log.Printf("Mensaje retirado de la cola asincronica: %s", mensaje)
 
         // Confirma manualmente el mensaje una vez procesado
         if err := msg.Ack(false); err != nil {
@@ -137,10 +136,12 @@ func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int) int{
                 fmt.Println("No quedan llaves a las",time.Now().Format("15:04:05"))
                 fmt.Println("Quedaron",mensaje_numero,"personas sin llaves en ", value_mensaje[1])
                 linea := "  "+value_mensaje[1] + "-" + strconv.Itoa(llaves_solicitadas) + "-" + strconv.Itoa(usuarios_registrados) + "-"+ strconv.Itoa(mensaje_numero) + "\n"
+                fmt.Println("Se inscribieron ",usuarios_registrados,"personas en ", value_mensaje[1], "a las",time.Now().Format("15:04:05"))
                 archivo.WriteString(linea)
             }else{
                 llaves = llaves - mensaje_numero
                 linea := "  "+value_mensaje[1] + "-" + strconv.Itoa(mensaje_numero) + "-" + strconv.Itoa(mensaje_numero) + "- 0\n"
+                fmt.Println("Se inscribieron ",mensaje_numero,"personas en ", value_mensaje[1], "a las",time.Now().Format("15:04:05"))
                 mensaje_numero = 0
                 archivo.WriteString(linea)
                 fmt.Println("Quedan",llaves,"llaves a las",time.Now().Format("15:04:05"))
@@ -155,6 +156,7 @@ func Datos_Cola_Rabbit( archivo *os.File, updateCh chan<- int) int{
 // Se supone que esta es la central Valve.
 func main() {
     servers = 0
+    x = 1
 	archivo1, _ := os.Open("parametro_de_inicio.txt")
 	
 	
@@ -177,8 +179,12 @@ func main() {
     fmt.Println("max:", max)
     fmt.Println("iteraciones:", iteraciones)
     
-
-
+    if iteraciones == -1{
+        fmt.Println("Generación ", x,"/infinito")
+    }else{
+        fmt.Println("Generación ", x,"/",iteraciones)
+    }
+    
     fmt.Println("Se generaran llaves al azar pertenecientes al siguente rango: [",min,",",max,"]")
 	llaves = generarLlaves(min,max)
 
