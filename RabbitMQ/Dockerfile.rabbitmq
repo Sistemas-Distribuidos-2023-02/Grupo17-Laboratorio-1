@@ -1,10 +1,6 @@
-FROM rabbitmq:3-management
+# Usa la imagen oficial de RabbitMQ desde Docker Hub
+FROM rabbitmq:3.8
 
-COPY rabbitmq.conf /etc/rabbitmq/
-
-ENV RABBITMQ_DEFAULT_USER=root
-ENV RABBITMQ_DEFAULT_PASS=1234
-
+# Habilita el complemento de gestión de RabbitMQ
 RUN rabbitmq-plugins enable rabbitmq_management
-RUN rabbitmq-plugins enable rabbitmq_shovel
-
+RUN rabbitmqctl add_queue cola1
