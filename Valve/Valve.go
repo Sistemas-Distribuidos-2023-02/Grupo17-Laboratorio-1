@@ -75,6 +75,7 @@ func (s *server) NotifyBidirectional(stream pb.Valve_NotifyBidirectionalServer) 
             
             if x == iteraciones{
                 fmt.Println("Se termino el programa a las",time.Now().Format("15:04:05"))
+                os.Exit(0)
                 break
             }else{
                 llaves = generarLlaves(min,max)
