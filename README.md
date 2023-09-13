@@ -15,6 +15,7 @@ Para iniciar un servidor regional usando docker usamos el siguiente comando.
 make docker-regional
 ```
 Ademas tienes que verificar la configuracipon en docker-compose.yml
+
 Para iniciar un servidor rabbit usando docker usamos.
 ```
 make docker-rabbit
