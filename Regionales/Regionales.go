@@ -3,7 +3,6 @@ package main
 import (
 	pb "Valve/proto"
 	"context"
-	"io/fs"
 	"log"
 	"google.golang.org/grpc"
 	"math/rand"
