@@ -3,6 +3,7 @@ package main
 import (
 	pb "Valve/proto"
 	"context"
+	"io/fs"
 	"log"
 	"google.golang.org/grpc"
 	"math/rand"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"fmt"
 	"time"
+	"strings"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -72,7 +74,7 @@ func main() {
     n, _ := archivo.Read(buffer)
     contenido := buffer[:n]
     contenido = []byte(contenido)
-    numero := string(contenido)
+    numero := strings.TrimSpace(string(contenido))
     interesados := usuariosInteresados(numero)
 
     fmt.Println("Cantidad de personas interesadas: ",interesados, "en la region: ", os.Getenv("region_name"))
