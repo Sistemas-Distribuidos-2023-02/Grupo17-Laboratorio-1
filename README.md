@@ -22,5 +22,29 @@ make docker-rabbit
 docker exec -it rabbitmq /bin/bash
 rabbitmqadmin declare queue name=solicitudes_regionales
 ```
-## Orden de ejecución
-Iniciar la cola rabbit primero, luego la central y posteriormente iniciar en algun orden los servidores regionales. (puede ocurrir errores si son todos al mismo tiempo).
+## Consideraciones
+* Se debe iniciar la cola rabbit primero, luego la central y posteriormente iniciar en algun orden los servidores regionales. (puede ocurrir errores si son todos al mismo tiempo).
+* Para iniciar el contenedor de los servidores regionales, en el Makefile dejar solo las regiones las cuales quieres iniciar en esa maquina. Ademas tienes que editar los datos necesarios en el docker compose, como por ejemplo la cola rabbit o las ip del servidor central.
+* El archivo docker-compose-servers.yml es un archivo docker-compose.yml de ejemplo pero configurado con las maquinas virtuales de prueba.
+
+### Ejemplo
+Makefile para la region 3:
+```makefile
+docker-regional:
+	docker-compose -f docker-compose.yml up regionales3
+```
+Docker-compose.yml para region 3 (Puedes cambiar los valores en args):
+```yml
+regionales3:
+    build:
+      context: ./Regionales 
+      dockerfile: Dockerfile.regionales
+      args:
+        valve_server: dist066.inf.santiago.usm.cl
+        rmq_server: dist065.inf.santiago.usm.cl
+        rmq_port: 25671
+        region_name: Asia
+    volumes:
+      - ./Regionales:/app/Regionales
+    network_mode: "host"
+```
